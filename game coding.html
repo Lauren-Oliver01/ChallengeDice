@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Challenge Dice - Roll for Fun!</title>
+  <style>
+    /* General Styles */
+    body {
+      background-color: #1a1a2e;
+      color: #fff;
+      font-family: 'Press Start 2P', cursive;
+      text-align: center;
+      margin: 0;
+      padding: 0;
+    }
+
+    h1 {
+      margin-top: 20px;
+      font-size: 2.5rem;
+      color: #e94560;
+      text-shadow: 2px 2px 5px #000;
+    }
+
+    .dice-container {
+      margin: 30px auto;
+    }
+
+    .dice {
+      font-size: 6rem;
+      cursor: pointer;
+      transition: transform 0.3s;
+    }
+
+    .dice:hover {
+      transform: scale(1.2);
+    }
+
+    .result {
+      font-size: 2rem;
+      margin: 20px;
+      color: #0f3460;
+    }
+
+    .timer {
+      font-size: 1.8rem;
+      margin: 15px;
+      color: #03c4a1;
+    }
+
+    footer {
+      margin-top: 50px;
+      font-size: 1rem;
+      color: #888;
+    }
+
+    button {
+      margin: 10px;
+      padding: 10px 30px;
+      font-size: 1.2rem;
+      background-color: #0f3460;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    button:hover {
+      background-color: #03c4a1;
+    }
+
+    .leaderboard-container {
+      margin-top: 40px;
+    }
+
+    .leaderboard {
+      width: 60%;
+      margin: 0 auto;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    .leaderboard th, .leaderboard td {
+      border: 2px solid #03c4a1;
+      padding: 15px;
+      font-size: 1.2rem;
+    }
+
+    input[type="text"] {
+      margin-top: 15px;
+      padding: 10px;
+      font-size: 1.2rem;
+      width: 50%;
+      border: 2px solid #03c4a1;
+      border-radius: 5px;
+    }
+  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <h1>Challenge Dice</h1>
+  <p>Roll the dice and challenge yourself to greatness!</p>
+
+  <div class="dice-container">
+    <span class="dice" id="dice">🎲</span>
+  </div>
+
+  <div class="result" id="result">Click the dice to roll!</div>
+
+  <div class="timer" id="timer">Time left: 35s</div>
+  <button id="startTimerBtn">Start Timer</button>
+
+  <div class="leaderboard-container">
+    <h2>Leaderboard</h2>
+
+    <input type="text" id="playerName" placeholder="Enter your name">
+    <button id="submitScoreBtn">Submit Score</button>
+
+    <table class="leaderboard">
+      <thead>
+        <tr>
+          <th>Player</th>
+          <th>Score</th>
+        </tr>
+      </thead>
+      <tbody id="leaderboard">
+        <tr>
+          <td colspan="2">No scores yet.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <button onclick="resetLeaderboard()">Reset Leaderboard</button>
+  </div>
+
+  <footer>
+    <p> Styled and created by Lauren Oliver, dice coding created by ChatGPT</p>
+  </footer>
+
+  <script>
+    const dice = document.getElementById('dice');
+    const result = document.getElementById('result');
+    const timerDisplay = document.getElementById('timer');
+    const startTimerBtn = document.getElementById('startTimerBtn');
+    const leaderboard = document.getElementById('leaderboard');
+    const playerNameInput = document.getElementById('playerName');
+    const submitScoreBtn = document.getElementById('submitScoreBtn');
+
+    let timer;
+    let timeLeft = 35;
+    let lastRoll = 0;
+
+    // Roll dice and display result
+    dice.addEventListener('click', () => {
+      lastRoll = Math.floor(Math.random() * 6) + 1;
+      result.textContent = `You rolled a ${lastRoll}! 🎉`;
+      clearInterval(timer); // Reset timer if running
+      timerDisplay.textContent = 'Time left: 35s';
+    });
+
+    // Start timer when button is clicked
+    startTimerBtn.addEventListener('click', () => {
+      if (lastRoll === 0) {
+        alert('Roll the dice first!');
+        return;
+      }
+      clearInterval(timer); // Clear any previous timer
+      timeLeft = 35;
+      updateTimer();
+      timer = setInterval(() => {
+        timeLeft--;
+        updateTimer();
+        if (timeLeft <= 0) {
+          clearInterval(timer);
+          alert("Time's up! Log your task or try again.");
+        }
+      }, 1000);
+    });
+
+    function updateTimer() {
+      timerDisplay.textContent = `Time left: ${timeLeft}s`;
+    }
+
+    // Add score to leaderboard
+    submitScoreBtn.addEventListener('click', () => {
+      const playerName = playerNameInput.value.trim();
+      if (!playerName) {
+        alert('Please enter your name.');
+        return;
+      }
+      if (lastRoll === 0) {
+        alert('Roll the dice first to get a score!');
+        return;
+      }
+      addScore(playerName, lastRoll);
+      playerNameInput.value = ''; // Clear input
+    });
+
+    function addScore(player, score) {
+      const leaderboardData = JSON.parse(localStorage.getItem('leaderboard')) || [];
+      leaderboardData.push({ player, score });
+      localStorage.setItem('leaderboard', JSON.stringify(leaderboardData));
+      updateLeaderboard();
+    }
+
+    function updateLeaderboard() {
+      const leaderboardData = JSON.parse(localStorage.getItem('leaderboard')) || [];
+      leaderboard.innerHTML = leaderboardData.map(entry => `
+        <tr><td>${entry.player}</td><td>${entry.score}</td></tr>
+      `).join('') || '<tr><td colspan="2">No scores yet.</td></tr>';
+    }
+
+    function resetLeaderboard() {
+      localStorage.removeItem('leaderboard');
+      updateLeaderboard();
+    }
+
+    // Initialize leaderboard on load
+    updateLeaderboard();
+  </script>
+
+</body>
+</html>
